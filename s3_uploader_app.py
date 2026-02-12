@@ -133,11 +133,16 @@ with st.sidebar:
     }
     selected_user = st.selectbox(
         "Who is uploading?",
-        options=list(user_mapping.keys()),
+        options=["Select a user..."] + list(user_mapping.keys()),
         help="Your files will be organized in your personal folder"
     )
-    user_folder = user_mapping[selected_user]
-    st.info(f"📂 Files → `{user_folder}/`")
+
+    if selected_user != "Select a user...":
+        user_folder = user_mapping[selected_user]
+        st.info(f"📂 Files → `{user_folder}/`")
+    else:
+        user_folder = None
+        st.warning("⚠️ Please select a user to continue")
 
 # Main app
 
@@ -181,6 +186,11 @@ with col2:
         accept_multiple_files=True,
         help="Select all files you want to upload (supports CSS, JS, images, etc.)"
     )
+
+# Check if user is selected before showing upload section
+if not user_folder:
+    st.info("👆 Please select a user from the sidebar to begin uploading")
+    st.stop()
 
 # Set S3 folder prefix to user's folder
 s3_folder_prefix = user_folder + "/"
