@@ -195,6 +195,14 @@ if not user_folder:
 # Set S3 folder prefix to user's folder
 s3_folder_prefix = user_folder + "/"
 
+# Optional custom folder name
+custom_folder_name = st.text_input(
+    "📂 Custom folder name (optional)",
+    placeholder="Leave blank to auto-detect from HTML",
+    help="Override the auto-detected folder name. If blank, the folder name is extracted from the HTML stylesheet link or the HTML filename."
+)
+custom_folder_name = custom_folder_name.strip() or None
+
 # Upload button
 if st.button("🚀 Upload to S3", type="primary", disabled=not (folder_files or html_file)):
     if not folder_files and not html_file:
@@ -214,19 +222,24 @@ if st.button("🚀 Upload to S3", type="primary", disabled=not (folder_files or 
                     html_content = html_file.read().decode('utf-8')
                     html_file.seek(0)  # Reset file pointer for later upload
 
-                    html_folder_name = extract_folder_from_html(html_content)
-
-                    if html_folder_name:
-                        st.info(f"📂 Detected folder name from HTML: '{html_folder_name}'")
+                    if custom_folder_name:
+                        html_folder_name = custom_folder_name
+                        st.info(f"📂 Using custom folder name: '{html_folder_name}'")
                     else:
-                        # Fallback to HTML filename without extension
-                        html_folder_name = Path(html_file.name).stem
-                        st.info(f"📂 Using HTML filename as folder: '{html_folder_name}'")
+                        html_folder_name = extract_folder_from_html(html_content)
 
-                # Upload folder files into a subfolder named after the HTML file
+                        if html_folder_name:
+                            st.info(f"📂 Detected folder name from HTML: '{html_folder_name}'")
+                        else:
+                            # Fallback to HTML filename without extension
+                            html_folder_name = Path(html_file.name).stem
+                            st.info(f"📂 Using HTML filename as folder: '{html_folder_name}'")
+
+                # Upload folder files into a subfolder
                 if folder_files:
-                    if html_folder_name:
-                        folder_path = s3_folder_prefix + html_folder_name + "/"
+                    effective_folder = custom_folder_name or html_folder_name
+                    if effective_folder:
+                        folder_path = s3_folder_prefix + effective_folder + "/"
                     else:
                         folder_path = s3_folder_prefix
 
